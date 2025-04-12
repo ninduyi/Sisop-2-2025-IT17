@@ -183,8 +183,9 @@ void move_file(const char *src_dir, const char *dst_dir, int decode_name, const 
 
         char logmsg[512];
         snprintf(logmsg, sizeof(logmsg), "%s - Successfully %s %s directory.",
-                 final_name, mode, strcmp(mode, "returned") == 0 ? "to starter kit" : "to quarantine");
+            entry->d_name, mode, strcmp(mode, "returned") == 0 ? "to starter kit" : "to quarantine");
         write_log(logmsg);
+
 
         if (decoded) free(decoded);
     }
