@@ -206,7 +206,7 @@ _**Oleh : C**_
 
 
 # Soal 4
-_**Oleh : Nabilah Anindya Paramesti**_
+_**Oleh : **_
 
 ## Deskripsi Soal
 Suatu hari, Nobita menemukan sebuah alat aneh di laci mejanya. Alat ini berbentuk robot kecil dengan mata besar yang selalu berkedip-kedip. Doraemon berkata, "Ini adalah Debugmon! Robot super kepo yang bisa memantau semua aktivitas di komputer!" Namun, alat ini harus digunakan dengan hati-hati. Jika dipakai sembarangan, bisa-bisa komputer Nobita malah error total! 
