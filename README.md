@@ -1,4 +1,4 @@
-# Praktikum Sistem Operasi Modul 1 - IT17
+# Praktikum Sistem Operasi Modul 2 - IT17
 
 ## Anggota Kelompok
 
@@ -114,139 +114,75 @@ if (stat(STARTER_KIT_FOLDER, &st) == -1) {
 ```
 
 ### Soal Tipe B
-> Setelah mendownload starter kit tersebut, Mafuyu ternyata lupa bahwa pada starter kit tersebut, tidak ada alat untuk mendecrypt nama dari file yang diencrypt menggunakan algoritma Base64. Oleh karena itu, bantulah Mafuyu untuk membuat sebuah directory karantina yang dapat mendecrypt nama file yang ada di dalamnya (Hint: gunakan daemon). Penggunaan: `./starterkit --decrypt`
+> Setelah mengunduh starter kit, Mafuyu menyadari bahwa nama-nama file di dalam folder `starter_kit` dienkripsi menggunakan algoritma Base64. Oleh karena itu, diminta untuk membuat sebuah proses daemon yang bertugas untuk mendekripsi nama-nama file tersebut dan memindahkannya ke folder `quarantine`. Setiap aktivitas perlu dicatat ke dalam file log. Perintah yang digunakan untuk menjalankan proses ini adalah:  
+>  
+> `./starterkit --decrypt`
 
 ### Penyelesaian B
-Setelah folder starter_kit berhasil diekstrak, buat proses daemon yang akan melakukan dekripsi nama file terenkripsi (base64) dan memindahkan file yang berhasil didekripsi ke dalam folder quarantine. Setiap aktivitas harus dicatat ke dalam file activity.log.
 
-Permintaan soal B dijawab melalui dua bagian utama:
-1. Fungsi `decrypt_daemon()`
-2. Fungsi `move_file()` dengan parameter decode aktif (decode_name = 1)
+Setelah folder `starter_kit` berhasil diekstraksi, program akan menjalankan sebuah **proses daemon** yang bertanggung jawab untuk **menyediakan proses latar belakang**. Daemon ini tidak secara langsung melakukan dekripsi, tetapi ia **menjadi proses aktif** yang dapat dikendalikan, misalnya untuk dimatikan (`--shutdown`). Proses pemindahan dan dekripsi file terjadi saat menjalankan perintah `--quarantine`.
 
-**1. Fungsi `decrypt_daemon()`**
-```bash
-void decrypt_daemon() {
-    pid_t pid = fork();
-    if (pid > 0) {
-        exit(0);
-    } else if (pid == 0) {
-        setsid();
+### **Fungsi `decrypt_daemon()`**
+```c
+pid_t pid = fork();
 ```
-- Membuat proses child dengan `fork()`.
-- Proses parent keluar langsung dengan `exit(0)`.
-- Proses child dijadikan session leader menggunakan `setsid()` sehingga menjadi daemon.
-```bash
-char msg[128];
-        snprintf(msg, sizeof(msg), "Successfully started decryption process with PID %d.", getpid());
-        write_log(msg);
-```
-- Menuliskan log bahwa proses dekripsi telah dimulai.
-```bash
-        chdir("/");
-        fclose(stdin);
-        fclose(stdout);
-        fclose(stderr);
-```
-- Pindah direktori kerja ke root `(/)` dan menutup file descriptor standar agar daemon berjalan di background dengan aman.
-```bash
-   mkdir(QUARANTINE_FOLDER, 0755);
-```
-- Membuat folder quarantine jika belum ada.
-```bash
-        while (1) {
-            sleep(10);
-        }
-    }
+- Membuat proses baru menggunakan `fork()`.
+- `fork()` akan menghasilkan dua proses: **proses induk (parent)** dan **proses anak (child)**.
+
+```c
+if (pid > 0) {
+    exit(0);
 }
 ```
-- Loop ini membuat proses daemon tetap hidup (running di background), walaupun belum melakukan tugas seperti mendekripsi file secara otomatis. karena tugas dekripsi tidak terjadi di sini, tapi dijalankan lewat `--quarantine`. Jadi bisa dibilang loop ini membuat proses daemon tetap eksis, dan bisa dimatikan nanti pakai` --shutdown`.
+- Jika proses yang sedang berjalan adalah parent, maka ia akan **langsung keluar** dari fungsi.
+- Hal ini dilakukan agar **hanya proses anak** yang melanjutkan sebagai daemon.
 
-**2. Fungsi `move_file()` dengan `decode_name = 1`**
+```c
+else if (pid == 0) {
+    setsid();
+```
+- Jika ini adalah proses anak, maka ia akan menjadi session leader dengan `setsid()`.
+- Artinya, proses ini akan benar-benar terpisah dari terminal — menjadi **proses daemon**.
 
-Fungsi ini dipanggil oleh bagian main() saat user memberikan perintah `--quarantine`. Berikut bagian yang relevan:
-```bash
-move_file(STARTER_KIT_FOLDER, QUARANTINE_FOLDER, 1, "moved to quarantine");
+```c
+char msg[128];
+snprintf(msg, sizeof(msg), "Successfully started decryption process with PID %d.", getpid());
+write_log(msg);
 ```
-```bash
-DIR *dir = opendir(src_dir);
-if (!dir) return;
-```
-- `DIR *dir = opendir(src_dir);` membuka folder sumber (src_dir), misalnya "starter_kit" atau "quarantine".
-- Fungsi opendir() mengembalikan pointer ke direktori yang dibuka. Hasilnya disimpan dalam dir, yang akan digunakan untuk membaca isi folder tersebut satu per satu.
-- `if (!dir) return;` Jika opendir() gagal (misalnya karena folder tidak ada atau tidak punya izin akses), maka dir bernilai NULL. Maka program langsung return, artinya fungsi move_file() akan berhenti dan tidak memproses apa pun.
+- Menuliskan pesan log ke file `activity.log`, menunjukkan bahwa proses dekripsi (daemon) telah dimulai.
 
-```bash
-struct dirent *entry;
-while ((entry = readdir(dir)) != NULL) {
+```c
+chdir("/");
+fclose(stdin);
+fclose(stdout);
+fclose(stderr);
 ```
-- `struct dirent *entry;` Struktur dirent mewakili entri (file atau folder) dalam sebuah direktori.
-- ` while ((entry = readdir(dir)) != NULL)` readdir() akan membaca satu per satu isi folder sampai habis. Setiap entri (misalnya nama file) akan disimpan dalam entry. Loop ini akan terus berjalan sampai semua isi folder dibaca (alias readdir() mengembalikan NULL).
+- Mengganti direktori kerja ke root (`/`), dan menutup tiga file descriptor standar (input, output, error).
+- Ini adalah **prosedur umum** dalam pembuatan daemon agar benar-benar berjalan di background dan tidak bergantung pada terminal.
 
-```bash
-if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+```c
+mkdir(QUARANTINE_FOLDER, 0755);
 ```
-- Mengecek apakah entri itu adalah "." (direktori itu sendiri) atau ".." (direktori induk)
-- Maka kalau nama file-nya "." atau "..", langsung continue, alias lompat ke iterasi berikutnya.
+- Membuat folder `quarantine` jika belum tersedia.
+- Folder ini akan menjadi lokasi file-file yang sudah berhasil didekripsi.
 
- ```bash
-char src_path[512], dst_path[512];
-snprintf(src_path, sizeof(src_path), "%s/%s", src_dir, entry->d_name);
+```c
+while (1) {
+    sleep(10);
+}
 ```
-- Buat path lengkap ke file sumber (src_path) = Misalnya src_dir = "starter_kit" dan entry->d_name = "ZmlsZS50eHQ=", maka hasilnya:
-`src_path = "starter_kit/ZmlsZS50eHQ="` Ini akan digunakan untuk mengecek file, dan untuk di-rename nanti.
+- Loop tanpa akhir (`while(1)`) digunakan agar proses daemon tetap berjalan.
+- `sleep(10)` digunakan agar proses ini tidak membebani CPU — ia akan “tidur” selama 10 detik di setiap siklusnya.
+- **Proses ini tidak melakukan dekripsi langsung**, tetapi bertugas menjaga agar daemon aktif.  
+  Dekripsi dan pemindahan file dilakukan ketika perintah `--quarantine` dijalankan.
 
-```bash
-if (!is_regular_file(src_path)) continue;
-```
-- Cek apakah src_path adalah file biasa. `Fungsi is_regular_file()` menggunakan `stat()` untuk memastikan bahwa ini adalah file biasa, bukan folder atau symlink. Kalau bukan file, maka dilewati.
-
-```bash
-const char *final_name = entry->d_name;
-char *decoded = NULL;
-```
-- Siapkan nama file tujuan, `final_name` awalnya adalah nama asli file. Tapi kalau decode_name == 1, maka file akan dicoba untuk didekode dari Base64, dan final_name akan diubah ke hasil decode. Decoded digunakan untuk menyimpan hasil decode sementara (jika ada).
-
-**Bagian dari fungsi move_file() yang melakukan dekripsi:**
-```bash
-if (decode_name) {
-    if (!is_base64_string(entry->d_name)) {
-        continue;
-    }
-    size_t out_len;
-    decoded = decode_base64(entry->d_name, &out_len);
-```
-- Mengecek apakah nama file adalah string base64 menggunakan is_base64_string().
-- Jika iya, lakukan decoding dengan decode_base64().
-```bash
-    if (decoded) {
-        int len = strlen(decoded);
-        while (len > 0 && (decoded[len - 1] == '\n' || decoded[len - 1] == '\r' || decoded[len - 1] == ' ' || decoded[len - 1] == '\t')) {
-            decoded[--len] = '\0';
-        }
-        if (is_printable_string(decoded)) {
-            final_name = decoded;
-        } else {
-            free(decoded);
-            continue;
-        }
-    } else {
-        continue;
-    }
-```
-- Membersihkan karakter whitespace dan newline dari hasil decoding.
-- Mengecek apakah hasil decoding adalah string yang bisa dibaca (printable).
-- Jika valid, gunakan nama hasil decoding untuk memindahkan file.
-```bash
-snprintf(dst_path, sizeof(dst_path), "%s/%s", dst_dir, final_name);
-rename(src_path, dst_path);
-```
-- Menyusun path tujuan dan memindahkan file dari starter_kit ke quarantine.
-```bash
-snprintf(logmsg, sizeof(logmsg), "%s - Successfully %s %s directory.",
-         final_name, mode, strcmp(mode, "returned") == 0 ? "to starter kit" : "to quarantine");
-write_log(logmsg);
-```
-- Menuliskan aktivitas pemindahan ke file log activity.log.
+### Kesimpulan
+Fungsi `decrypt_daemon()` membuat program berjalan sebagai proses **daemon (background service)** yang:
+- Terpisah dari terminal
+- Tidak langsung melakukan pemrosesan
+- Tetap aktif dan menunggu instruksi lain
+- Mencatat informasi ke dalam log
+- Membuat folder karantina jika belum ada
 
 ## Kendala
 
