@@ -155,30 +155,28 @@ void move_file(const char *src_dir, const char *dst_dir, int decode_name, const 
         char *decoded = NULL;
 
         if (decode_name) {
-            if (!is_base64_string(entry->d_name)) {
-                continue; // skip file jika bukan base64
-            }
-
-            size_t out_len;
-            decoded = decode_base64(entry->d_name, &out_len);
-            if (decoded) {
-                // Bersihkan trailing newline/whitespace
-                int len = strlen(decoded);
-                while (len > 0 && (decoded[len - 1] == '\n' || decoded[len - 1] == '\r' ||
-                                   decoded[len - 1] == ' '  || decoded[len - 1] == '\t')) {
-                    decoded[--len] = '\0';
+            if (is_base64_string(entry->d_name)) {
+                size_t out_len;
+                decoded = decode_base64(entry->d_name, &out_len);
+                if (decoded) {
+                    // Bersihkan trailing newline/whitespace
+                    int len = strlen(decoded);
+                    while (len > 0 && (decoded[len - 1] == '\n' || decoded[len - 1] == '\r' ||
+                                       decoded[len - 1] == ' '  || decoded[len - 1] == '\t')) {
+                        decoded[--len] = '\0';
+                    }
+        
+                    if (is_printable_string(decoded)) {
+                        final_name = decoded;
+                    } else {
+                        free(decoded);
+                        decoded = NULL;
+                    }
                 }
-
-                if (is_printable_string(decoded)) {
-                    final_name = decoded;
-                } else {
-                    free(decoded);
-                    continue;
-                }
-            } else {
-                continue; // decode gagal
+                // kalau gagal decode atau is_printable_string false, pakai nama asli (final_name tetap entry->d_name)
             }
-        }
+            // kalau bukan base64, final_name tetap original name (entry->d_name)
+        }        
 
         snprintf(dst_path, sizeof(dst_path), "%s/%s", dst_dir, final_name);
         rename(src_path, dst_path);
