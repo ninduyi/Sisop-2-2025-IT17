@@ -16,7 +16,7 @@
 - [Soal 3](#soal-3)
 - [Soal 4](#soal-4)
 
-# SOAL 1 #
+# Soal 1 #
 *Oleh : Balqis Sani Sabillah*
 
 ## Deskripsi Soal ## 
@@ -1101,51 +1101,70 @@ write_log(msg);
 
 Dengan adanya activity.log, pengguna seperti Mafuyu dan Kanade bisa mengetahui dengan jelas aktivitas yang telah dilakukan oleh program.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                
-## Kendala
-
 ## Dokumentasi
+#### Soal A & B
+![command decrypt](assets/command1b.PNG)
+
+Ketika menjalankan perintah di atas maka akan muncul file dan folder baru sebagai berikut
+
+![command decrypt](assets/strukturFolder1b.PNG)
+
+![command decrypt](assets/successUnzip.PNG)
+
+File zip dari link berhasil di unzip ke folder `starter_kit`, folder `quarantine` dibuat, dan muncul file `activity.log` untuk mencatat aktivitas. Dari perintah `./starterkit --decrypt` akan muncul pesan sebagai berikut
+
+![command decrypt](assets/log1b.PNG)
+
+### Soal C (`--quarantine`)
+![command quarantine](assets/command1c.PNG)
+
+Ketika menjalankan perintah di atas maka file di `starter_kit` akan di pindahkan ke `quarantine` sekaligus nama file yang terenkripsi akan di decrypt
+
+![command quarantine](assets/decryptToQuarantine.PNG)
+
+Aktivitas tersebut juga di catat di `activity.log`
+
+![](assets/log1c.PNG)
+
+### Soal C (`--return`)
+![command return](assets/command1d.PNG)
+
+Ketika menjalankan perintah di atas maka file yang tadinya ada di folder `quarantine` akan dipindahkan ke `starter_kit` kembali.
+
+![](assets/moveToStarterKit.PNG)
+
+Dan akan mencatat aktivitas di log file
+
+![](assets/log1d.PNG)
+
+### Soal D
+![command eradicate](assets/command1e.PNG)
+
+Ketika menjalankan perintah di atas maka program akan menghapus seluruh file yang ada di folder `quarantine`
+
+![](assets/deleteFile(eradicate).PNG)
+
+Dan akan mencatat di log file
+
+![](assets/log1e.PNG)
+
+### Soal E
+Ketika menjalankan perintah **`./starterkit --shutdown`** maka proses daemon dari program ini akan di berhentikan, berikut merupakan pengecekannya menggunakan command `ps aux | starterkit`
+
+![](assets/shutdown.PNG)
+
+Lalu aktivitas juga akan di catat di log file dengan pesan sebagai berikut
+
+![](assets/successShutdown.PNG)
+
+
+### Soal F
+Di soal ini diminta untuk menambahkan error handling, misalnya ketika saya mengetikkan command berikut akan muncul pesan di terminal
+
+![command decrypt](assets/errorHandling.PNG)
+
+### Soal G
+Untuk soal ini sudah di dokumentasikan di atas
 
 
 # Soal 3
