@@ -16,16 +16,450 @@
 - [Soal 3](#soal-3)
 - [Soal 4](#soal-4)
 
-# Soal 1
-_**Oleh : A**_
+# SOAL 1 #
+*Oleh : Balqis Sani Sabillah*
 
-## Deskripsi Soal
+## Deskripsi Soal ## 
+Kamu terbangun secara tiba-tiba di suatu lokasi yang tidak diketahui, saat kamu melihat sekitar yang terlihat hanyalah kegelapan dan sebuah pintu dengan dua mata berwarna yang melihatmu dari lubang pintu tersebut.
+Ia merupakan naga bernama Cyrus yang menjaga pintu tersebut dan kamu harus meng-input password yang benar untuk masuk. Karena tidak mungkin untuk menebak password, Ia memberikanmu sebuah clue Clues.zip. Untungnya, kamu merupakan Directory Lister yang jago sehingga clue ini dapat berubah menjadi sebuah password. 
+[Author: Fico/ purofuro]
 
-## Jawaban
-### Soal Tipe A
-> Soal
+### Tipe soal A ###
 
-### Penyelesaian A
+**A. Downloading the Clues**
+
+Karena kamu telah diberikan sebuah link Clues oleh Cyrus, kamu membuat file bernama `action.c` yang dimana kalau dijalankan seperti biasa tanpa argumen tambahan akan mendownload dan meng-unzip file tersebut secara langsung. Saat kamu melihat isi dari Clues tersebut, isinya berupa 4 folder yakni ClueA - ClueD dan di masing-masing folder tersebut terdapat .txt files dan isinya masih tidak jelas, mungkin beberapa kata di dalam .txt file yang dapat dicari di inventory website? (Note: inventory bersifat untuk seru-seruan saja).  Jangan lupa untuk menghapus Clues.zip setelah diekstrak dan buatlah apabila folder Clues sudah ada, maka command tersebut tidak akan mendownload `Clues.zip` lagi apabila dijalankan.
+
+### JAWABAN ###
+
+```
+void run_command(char *argv[]) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        execvp(argv[0], argv);
+        perror("exec failed");
+        exit(EXIT_FAILURE);
+    } else {
+        wait(NULL);
+    }
+}
+
+```
+### Keterangan ###
+### `pid_t pid = fork();` ###
+- `fork()` = digunakan untuk membuat proses anak (child process).
+- pid akan berisi: 0 di proses anak, >0 (PID anak) di proses induk.
+### `if (pid == 0)` ###
+- Artinya kita sekarang berada di proses anak.
+- Di sini, kita jalankan perintah terminal pakai `execvp():`
+### `execvp(argv[0], argv);` ###
+- argv[0] → nama program (misalnya "wget").
+- argv → daftar argumen, termasuk argv[0].
+### `perror("exec failed");` ###
+- Kalau `execvp()` gagal , akan mencetak pesan error ke terminal.
+### `exit(EXIT_FAILURE);` ###
+- Kalau gagal `exec`, proses anak keluar dengan status gagal `(EXIT_FAILURE)`.
+
+
+```
+void download_and_extract() {
+    if (access("Clues", F_OK) == 0) {
+        printf("Clues folder already exists. Skipping download.\n");
+        return;
+    }
+
+    printf("Downloading Clues.zip...\n");
+    char *wget_args[] = {"wget", "-O", "Clues.zip", "https://drive.usercontent.google.com/u/0/uc?id=1xFn1OBJUuSdnApDseEczKhtNzyGekauK&export=downloadL/Clues.zip", NULL}; 
+    run_command(wget_args);
+
+    printf("Unzipping Clues.zip...\n");
+    char *unzip_args[] = {"unzip", "-o", "Clues.zip", NULL};
+    run_command(unzip_args);
+
+    printf("Deleting Clues.zip...\n");
+    remove("Clues.zip");
+}
+```
+
+ ### Keterangan ###
+ ### `if (access("Clues", F_OK) == 0)`### 
+ - Mengecek apakah folder `Clues` sudah ada, `F_OK` : cek keberadaan file.
+ - `printf("Clues folder already exists. Skipping download.\n");` = jika file Clues sudah terdownload maka akan keluar kalimat ini
+ ### `char *wget_args[] = {"wget", "-O", "Clues.zip", "https://...", NULL}; run_command(wget_args);` ### 
+ - download file dari link dan simpan sebagai Clues.zip.
+ - Dipanggil dengan `run_command()`, yang akan menjalankan perintah ini di terminal.
+### `char *unzip_args[] = {"unzip", "-o", "Clues.zip", NULL}; run_command(unzip_args);` ###
+- `-o` artinya: overwrite jika file sudah ada.
+- Akan mengekstrak isi Clues.zip (berupa folder Clues berisi petunjuk/teks).
+### `remove("Clues.zip");` ###
+- Menghapus file `Clues.zip` setelah selesai diekstrak. 
+
+
+## Tipe Soal B ## 
+**B. Filtering the Files**
+
+Karena kebanyakan dari file tersebut berawal dengan 1 huruf atau angka, kamu pun mencoba untuk memindahkan file-file yang hanya dinamakan dengan 1 huruf dan 1 angka tanpa special character kedalam folder bernama Filtered. Kamu tidak suka kalau terdapat banyak clue yang tidak berguna jadi disaat melakukan filtering, file yang tidak terfilter dihapus. Karena kamu tidak ingin membuat file kode lagi untuk filtering, maka kamu menggunakan file sebelumnya untuk filtering file-file tadi dengan menambahkan argumen saat ingin menjalankan action.c
+
+Contoh penggunaan:
+puro@furo:~$ ./action -m Filter
+
+### Jawaban ###
+
+```
+int is_valid_file(const char *name) {
+    return strlen(name) == 5 && isalnum(name[0]) && name[1] == '.' && name[2] == 't' && name[3] == 'x' && name[4] == 't'; }`
+```
+### Keterangan ###
+- ### `int is_valid_file(const char *name) { return strlen(name) == 5 && isalnum(name[0]) && name[1] == '.' && name[2] == 't' && name[3] == 'x' && n [4] == 't'; }` ###
+- Tujuan: Mengecek apakah nama file sesuai format seperti `A.txt`, `1.txt`, `x.txt`, dll.
+- `strlen(name)` == 5 → Panjang nama harus 5 karakter.
+- `isalnum(name[0])` = Karakter pertama harus angka atau huruf.
+- `name[1] == '.' && name[2] == 't' && name[3] == 'x' && name[4] == 't'` =  Sisa karakter harus persis .txt.
+
+```
+int is_single_char_filename(const char *name) {
+    return strlen(name) == 5 &&
+           ((isdigit(name[0]) || isalpha(name[0])) && isalnum(name[0])) &&
+           name[1] == '.' && strcmp(name + 1, ".txt") == 0;
+}
+```
+### Keterangan ###
+- ### `int is_single_char_filename(const char *name) { return strlen(name) == 5 && ((isdigit(name[0]) || isalpha(name[0])) && isalnum(name[0])) && name[1] == '.' && strcmp(name + 1, ".txt") == 0; }` ### 
+- `strlen(name)` == 5 → Sama, panjang harus 5.
+- `isdigit(name[0]) || isalpha(name[0])` → Karakter pertama boleh huruf atau angka.
+- `isalnum(name[0])` → Karakter pertama juga harus alfanumerik (sebenarnya ini redundant).
+- `strcmp(name + 1, ".txt")` == 0 → Mengecek karakter dari posisi ke-1 sampai akhir adalah .txt.
+- Jadi, intinya dia mengecek apakah nama file itu seperti: a.txt, 9.txt, Z.txt, dll — satu karakter, lalu .txt.
+
+
+```
+void filter_files() {
+    mkdir("Filtered", 0755);
+    DIR *dir = opendir("Clues");
+    if (!dir) {
+        perror("opendir Clues");
+        return;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type != DT_DIR || strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        char subdir[MAX_PATH];
+        snprintf(subdir, MAX_PATH, "Clues/%s", entry->d_name);
+        DIR *sub = opendir(subdir);
+        if (!sub) continue;
+
+        struct dirent *file;
+        while ((file = readdir(sub)) != NULL) {
+            if (is_single_char_filename(file->d_name)) {
+                char src[MAX_PATH], dst[MAX_PATH];
+                snprintf(src, MAX_PATH, "%s/%s", subdir, file->d_name);
+                snprintf(dst, MAX_PATH, "Filtered/%s", file->d_name);
+                rename(src, dst);
+            } else if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0) {
+                char path[MAX_PATH];
+                snprintf(path, MAX_PATH, "%s/%s", subdir, file->d_name);
+                remove(path);
+            }
+        }
+        closedir(sub);
+    }
+    closedir(dir);
+}
+
+int is_digit_filename(const char *name) {
+    return isdigit(name[0]);
+}
+
+```
+
+### Keterangan ###
+### `mkdir("Filtered", 0755);` ###
+- Ini membuat folder bernama Filtered.
+- 0755 adalah permission Unix:
+- 7 (rwx): owner bisa baca, tulis, eksekusi
+- 5 (r-x): grup bisa baca dan eksekusi
+- 5 (r-x): others bisa baca dan eksekusi
+- Jadi: folder ini bisa diakses dan dibaca orang lain juga.
+
+### `DIR *dir = opendir("Clues");` ###
+- Membuka folder Clues/ → agar kita bisa membaca isinya.
+- DIR *dir adalah pointer ke struktur direktori.
+
+### `if (!dir) { perror("opendir Clues"); return; }` ###
+- Kalau folder Clues/ tidak bisa dibuka (misalnya tidak ada), tampilkan error dengan perror() dan keluar dari fungsi.
+
+ ### `while ((entry = readdir(dir)) != NULL) { ... }` ###
+- Ini loop untuk membaca isi folder Clues/.
+- entry akan berisi satu per satu entri (file atau folder) yang ada di Clues/.
+
+### `if (entry->d_type != DT_DIR || strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;` ###
+- Lewati jika:
+- Entitas tersebut bukan folder (d_type != DT_DIR)
+- Atau nama foldernya adalah . atau .. (folder khusus sistem)
+- Jadi hanya proses subfolder-subfolder valid di dalam Clues/.
+
+### `char subdir[MAX_PATH]; snprintf(subdir, MAX_PATH, "Clues/%s", entry->d_name);` ###
+- Membuat path lengkap ke subfolder.
+
+### `DIR *sub = opendir(subdir); if (!sub) continue;` ###
+- Buka subfolder-nya.
+- Kalau gagal dibuka, skip dan lanjut ke folder berikutnya.
+
+### `while ((file = readdir(sub)) != NULL) { ... }` ###
+- Loop untuk membaca isi subfolder yang sedang dibuka.
+
+### `if (is_single_char_filename(file->d_name)) { ... }` ### 
+- Cek apakah file sesuai format X.txt atau 3.txt (total 5 karakter).
+- Buat path asal (src) dan path tujuan (dst)
+- Lalu rename() untuk memindahkan file dari src ke dst.
+
+### `else if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0) { ... }` ### 
+Kalau file tidak sesuai format, dan bukan . atau .., maka:
+- Buat path lengkap ke file
+- Hapus file tersebut.
+
+### `closedir(sub); dan closedir(dir);` ###
+- Setelah selesai baca subfolder, tutup dengan closedir(sub).
+- Setelah semua subfolder diproses, tutup juga folder utama dengan closedir(dir).
+
+### `int is_single_char_filename(const char *name) { return strlen(name) == 5 && ((isdigit(name[0]) || isalpha(name[0])) && isalnum(name[0])) && name[1] == '.' && strcmp(name + 1, ".txt") == 0; }` ###
+- Panjang nama = 5 (contoh: A.txt, 3.txt)
+- Karakter pertama adalah huruf/angka (isalpha() atau isdigit())
+- 4 karakter terakhir adalah .txt
+
+## Tipe Soal C ## 
+
+**C. Combine the File Content**
+
+Di setiap file .txt yang telah difilter terdapat satu huruf dan agar terdapat progress, Cyrus memberikan clue tambahan untuk meletakan/redirect isi dari setiap .txt file tersebut kedalam satu file yaitu Combined.txt dengan menggunakan FILE pointer. Tetapi, terdapat urutan khusus saat redirect isi dari .txt tersebut, yaitu urutannya bergantian dari .txt dengan nama angka lalu huruf lalu angka lagi lalu huruf lagi. Lalu semua file .txt sebelumnya dihapus. Seperti halnya tadi, agar efisien kamu ingin menjalankan action.c dengan argumen tambahan.
+
+Contoh urutan:
+1.txt
+a.txt
+2.txt
+b.txt
+dst..
+
+		Contoh penggunaan:
+		puro@furo:~$ ./action -m Combine
+
+### Jawaban ###
+
+```
+void combine_files() {
+    FILE *out = fopen("Combined.txt", "w");
+    if (!out) {
+        perror("fopen Combined.txt");
+        return;
+    }
+
+    struct dirent *entry;
+    DIR *dir = opendir("Filtered");
+    if (!dir) {
+        perror("opendir Filtered");
+        fclose(out);
+        return;
+    }
+
+    char *filenames[100];
+    int count = 0;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (is_single_char_filename(entry->d_name)) {
+            filenames[count] = strdup(entry->d_name);
+            count++;
+        }
+    }
+    closedir(dir);
+
+    // Sort filenames: angka, file, angka, file
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (filenames[i][0] > filenames[j][0]) {
+                char *tmp = filenames[i];
+                filenames[i] = filenames[j];
+                filenames[j] = tmp;
+            }
+        }
+    }
+
+    int use_digit = 1;
+    int written = 0;
+    while (written < count) {
+        for (int i = 0; i < count; i++) {
+            if ((use_digit && isdigit(filenames[i][0])) || (!use_digit && isalpha(filenames[i][0]))) {
+                char path[MAX_PATH];
+                snprintf(path, MAX_PATH, "Filtered/%s", filenames[i]);
+                FILE *in = fopen(path, "r");
+                if (in) {
+                    char c;
+                    while ((c = fgetc(in)) != EOF)
+                        fputc(c, out);
+                    fclose(in);
+                    remove(path);
+                    written++;
+                    use_digit = !use_digit;
+                    break;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < count; i++)
+        free(filenames[i]);
+    fclose(out);
+}
+
+```
+### Keterangan ### 
+### `FILE *out = fopen("Combined.txt", "w"); if (!out) { perror("fopen Combined.txt"); return; }` ###
+- Buat file Combined.txt untuk ditulis ("w" = write).
+- Kalau gagal (misalnya permission error), tampilkan pesan error dan keluar dari fungsi.
+
+### `DIR *dir = opendir("Filtered"); if (!dir) { perror("opendir Filtered"); fclose(out); return; }` ###
+- Buka folder Filtered/ untuk dibaca isinya.
+- Kalau gagal, tampilkan error dan keluar (dengan menutup file out dulu).
+
+### `char *filenames[100]; int count = 0; while ((entry = readdir(dir)) != NULL) { if (is_single_char_filename(entry->d_name)) { filenames[count] = strdup(entry->d_name); count++; } }` ### 
+- Loop ini mengumpulkan semua file *.txt yang valid (pakai is_single_char_filename()).
+- Disimpan ke array filenames[].
+- Fungsi strdup() akan menyimpan salinan string nama file.
+
+### `for (int i = 0; i < count - 1; i++) { for (int j = i + 1; j < count; j++) { if (filenames[i][0] > filenames[j][0]) { char *tmp = filenames[i]; filenames[i] = filenames[j]; filenames[j] = tmp; } } }` ### 
+- ` for (int i = 0; i < count - 1; i++) ` = Loop luar: Ambil 1 file (anggap sebagai file "sekarang").
+-  `for (int j = i + 1; j < count; j++)` = Loop dalam: Bandingkan file sekarang dengan semua file setelahnya.
+-    `if (filenames[i][0] > filenames[j][0]) ` = Kalau huruf/angka pertama file i lebih besar dari file j (misalnya 'c' > 'a', atau '2' > '1') 
+- ` char *tmp = filenames[i]; filenames[i] = filenames[j]; filenames[j] = tmp; ` = Tukar posisi mereka supaya file yang lebih kecil ada di depan.
+
+### ` int use_digit = 1; int written = 0; while (written < count) { for (int i = 0; i < count; i++) { if ((use_digit && isdigit(filenames[i][0])) || (!use_digit && isalpha(filenames[i][0]))) { } } }` ### 
+- `use_digit = 1:` mulai dengan mencari file yang diawali angka (0-9)
+- Setelah dapat file yang sesuai:
+- Buka file → salin isinya ke `Combined.txt`
+- Hapus file asal dari `Filtered/`
+- Ganti `use_digit = !use_digit` → agar selanjutnya cari huruf
+### `char path[MAX_PATH]; snprintf(path, MAX_PATH, "Filtered/%s", filenames[i]); FILE *in = fopen(path, "r"); if (in) { char c; while ((c = fgetc(in)) != EOF) fputc(c, out); fclose(in); remove(path); written++; use_digit = !use_digit; break; } `### 
+- Bangun path ke file (Filtered/1.txt, dll).
+- Buka file input.
+- Salin karakter demi karakter ke Combined.txt.
+- Setelah itu: Tutup file , Hapus file aslinya (remove()), Tambah hitungan written, Ganti giliran (dari angka → huruf, atau sebaliknya)
+### `for (int i = 0; i < count; i++) free(filenames[i]); fclose(out); ` ###
+- Setelah semua selesai:
+- `free()` setiap nama file yang disimpan dengan `strdup()`
+- Tutup file `Combined.txt`
+ 
+## Tipe Soal D ## 
+**D. Decode the file** 
+
+Karena isi Combined.txt merupakan string yang random, kamu 
+memiliki ide untuk menggunakan Rot13 untuk decode string tersebut dan meletakan hasil dari yang telah di-decode tadi kedalam file bernama Decoded.txt. Jalankan file action.c dengan argumen tambahan untuk proses decoding ini. 
+
+Contoh penggunaan:
+puro@furo:~$ ./action -m Decode
+
+```
+void decode_rot13() {
+    FILE *in = fopen("Combined.txt", "r");
+    FILE *out = fopen("Decoded.txt", "w");
+
+    if (!in || !out) {
+        perror("fopen Combined.txt / Decoded.txt");
+        return;
+    }
+
+    char c;
+    while ((c = fgetc(in)) != EOF) {
+        if ('a' <= c && c <= 'z')
+            c = (c - 'a' + 13) % 26 + 'a';
+        else if ('A' <= c && c <= 'Z')
+            c = (c - 'A' + 13) % 26 + 'A';
+        fputc(c, out);
+    }
+
+    fclose(in);
+    fclose(out);
+}
+
+### Jawaban ###
+
+```
+### Keterangan ###
+### `FILE *in = fopen("Combined.txt", "r"); FILE *out = fopen("Decoded.txt", "w");` ###
+- Buka file input (`Combined.txt`) untuk dibaca ("r")
+- Buka file output (`Decoded.txt`) untuk ditulis ("w")
+### `if (!in || !out) { perror("fopen Combined.txt / Decoded.txt"); return; }` ###
+- Kalau salah satu file gagal dibuka (mungkin filenya nggak ada), tampilkan pesan error lalu keluar dari fungsi.
+### `char c; while ((c = fgetc(in)) != EOF)` ### 
+- Baca satu karakter dari file input, selama belum mencapai EOF (End of File).
+### `    if ('a' <= c && c <= 'z') c = (c - 'a' + 13) % 26 + 'a'; ` ###
+
+- kalau karakter c adalah huruf kecil (a sampai z), geser 13 posisi.
+Contoh: 'b' → 'o', 'z' → 'm'.
+- Cara kerjanya:
+- 'c' - 'a': ubah huruf ke angka 0–25
+- +13 % 26: geser 13 posisi (dan wrap ke awal kalau lewat z)
+- + 'a': ubah angka balik jadi huruf
+
+### `    else if ('A' <= c && c <= 'Z') c = (c - 'A' + 13) % 26 + 'A'; ` ###
+- Sama kayak sebelumnya, tapi untuk huruf besar (A sampai Z).
+
+## Tipe Soal E ##
+**E. Password Check**
+
+Karena kamu sudah mendapatkan password tersebut, kamu mencoba untuk mengecek apakah password yang sudah kamu dapatkan itu benar atau tidak dengan cara di-input ke lokasi tadi.
+Notes: Berikan error handling yakni memberi tahu command yang benar jika salah argumen.
+
+### Jawaban ###
+
+```
+void show_usage() {
+    printf("Usage:\n");
+    printf("./action               --> Download dan unzip Clues.zip\n");
+    printf("./action -m Filter     --> Filter files into Filtered/\n");
+    printf("./action -m Combine    --> Combine contents into Combined.txt\n");
+    printf("./action -m Decode     --> Decode Combined.txt into Decoded.txt using Rot13\n");
+}
+
+int main(int argc, char *argv[]) {
+    if (argc == 1) {
+        download_and_extract();
+    } else if (argc == 3 && strcmp(argv[1], "-m") == 0) {
+        if (strcmp(argv[2], "Filter") == 0)
+            filter_files();
+        else if (strcmp(argv[2], "Combine") == 0)
+            combine_files();
+        else if (strcmp(argv[2], "Decode") == 0)
+            decode_rot13();
+        else
+            show_usage();
+    } else {
+        show_usage();
+    }
+    return 0;
+}
+```
+### Keterangan ### 
+- `argc` = jumlah argumen dari command line
+- `argv` = array string berisi argumen tersebut
+- `./action -m Combine` = 
+- argc = 3
+- argv[0] = "./action"
+- argv[1] = "-m"
+- argv[2] = "Combine"
+### `if (argc == 1) { download_and_extract(); }` ###
+- kalau nggak ada argumen tambahan `(cuma ./action)` , maka:
+- Jalankan fungsi `download_and_extract()`
+- Fungsinya: download file `Clues.zip` dan ekstrak ke folder `Clues/`
+### `else if (argc == 3 && strcmp(argv[1], "-m") == 0) ` ###
+-  Kalau ada 3 argumen dan argumen kedua adalah -m, maka:
+- Cek isi argumen ketiga:
+- `   if (strcmp(argv[2], "Filter") == 0) filter_files(); ` = Kalau `Filter` → jalanin `filter_files()`
+- `   else if (strcmp(argv[2], "Combine") == 0) combine_files(); ` = Kalau `Combine` → jalanin `combine_files()`
+- `   else if (strcmp(argv[2], "Decode") == 0) decode_rot13();` = Kalau `Decode` → jalanin `decode_rot13()`
+- `     else show_usage(); ` = Kalau gak cocok salah satu, tampilin instruksi bantuan.
+- `  else { show_usage(); }` = Kalau argumennya aneh-aneh atau jumlahnya salah, tampilkan `show_usage()` juga.
 
 ## Kendala
 
