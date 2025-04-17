@@ -1195,7 +1195,7 @@ Untuk soal ini sudah di dokumentasikan di atas
 
 
 # Soal 3
-_**Oleh : Muhammad Khairul Yahya**_
+_*Oleh : Muhammad Khairul Yahya*_
 
 ## Deskripsi Soal
 Dok dok dorokdok dok rodok. Anomali malware yang dikembangkan oleh Andriana di PT Mafia Security Cabang Ngawi yang hanya keluar di malam pengerjaan soal shift modul 2. Konon katanya anomali ini akan mendatangi praktikan sisop yang tidak mengerjakan soal ini. Ihh takutnyeee. Share ke teman teman kalian yang tidak mengerjakan soal ini 
@@ -1482,7 +1482,7 @@ Untuk kendala sendiri itu ada yang minor sama ada yang gk bisa,
 
 
 # Soal 4
-_**Oleh : Muhammad Khairul Yahya **_
+_*Oleh : Muhammad Khairul Yahya *_
 
 ## Deskripsi Soal
 Suatu hari, Nobita menemukan sebuah alat aneh di laci mejanya. Alat ini berbentuk robot kecil dengan mata besar yang selalu berkedip-kedip. Doraemon berkata, "Ini adalah Debugmon! Robot super kepo yang bisa memantau semua aktivitas di komputer!" Namun, alat ini harus digunakan dengan hati-hati. Jika dipakai sembarangan, bisa-bisa komputer Nobita malah error total! 
@@ -1490,14 +1490,14 @@ Suatu hari, Nobita menemukan sebuah alat aneh di laci mejanya. Alat ini berbentu
 
 ## Jawaban
 
-### Soal 3-A
+### Soal 4-A
 
 Mengetahui semua aktivitas user
 Doraemon ingin melihat apa saja yang sedang dijalankan user di komputernya. Maka, dia mengetik:
 **`./debugmon list <user>`**
 Debugmon langsung menampilkan daftar semua proses yang sedang berjalan pada user tersebut beserta PID, command, CPU usage, dan memory usage.
 
-### Penyelesaian 3-A
+### Penyelesaian 4-A
 
 **Struktur Data `processinfo`**:
 ```c
@@ -1534,13 +1534,13 @@ void list_processes(const char *username) {
 - Implementasi dari perintah `./debugmon list <user>`. Fungsi ini lah yang akan dipanggil ketika user memasukkan perintah tersebut.
 - Menampilkan daftar proses user dalam format tabel yang menampilkan PID, command, penggunaan CPU, dan penggunaan memory. Sesuai dengan format 
 
-### Soal 3-B
+### Soal 4-B
 
 Memasang mata-mata dalam mode daemon
 Doraemon ingin agar Debugmon terus memantau user secara otomatis. Doraemon pun menjalankan program ini secara daemon dan melakukan pencatatan ke dalam file log dengan menjalankan:
 **`./debugmon daemon <user>`**
 
-### Penyelesaian 3-B
+### Penyelesaian 4-B
 
 **Fungsi `daemon_mode()`**:
 ```c
@@ -1597,13 +1597,13 @@ void daemon_mode(const char *username) {
 - Menggunakan fungsi `fork` untuk membuat proses anak yang akan menjadi daemon.
 - Menggunakan fungsi `setsid` untuk membuat proses anak menjadi daemon.
 
-### Soal 3-C
+### Soal 4-C
 
 Menghentikan pengawasan
 User mulai panik karena setiap gerak-geriknya diawasi! Dia pun memohon pada Doraemon untuk menghentikannya dengan:
 **`./debugmon stop <user>`**
 
-### Penyelesaian 3-C
+### Penyelesaian 4-C
 
 **fungsi `stop_monitoring()`**:
 ```c
@@ -1625,14 +1625,14 @@ void stop_monitoring(const char *username) {
 - Menampilkan pesan bahwa pengawasan telah dihentikan.
 - Menggunakan fungsi `execute_command` untuk menjalankan perintah `pkill` untuk membunuh proses daemon.
 
-### SOAL 3-D
+### SOAL 4-D
 
 Menggagalkan semua proses user yang sedang berjalan
 Doraemon yang iseng ingin mengerjai user dengan mengetik:
 **`./debugmon fail <user>`**
 Debugmon langsung menggagalkan semua proses yang sedang berjalan dan menulis status proses ke dalam file log dengan status FAILED. Selain menggagalkan, user juga tidak bisa menjalankan proses lain dalam mode ini.
 
-### Penyelesaian 3-D
+### Penyelesaian 4-D
 
 **Fungsi `fail_processes()`**:
 ```c
@@ -1656,14 +1656,14 @@ void fail_processes(const char *username) {
 - Mengunci akun user dengan `usermod -L` sehingga tidak bisa menjalankan proses baru.
 - Mencatat status "RUNNING" ke log.
 
-### Soal 3-E
+### Soal 4-E
 
 Mengizinkan user untuk kembali menjalankan proses
 Karena kasihan, Shizuka meminta Doraemon untuk memperbaiki semuanya. Doraemon pun menjalankan:
 **`./debugmon revert <user>`**
 Debugmon kembali ke mode normal dan bisa menjalankan proses lain seperti biasa.
 
-### Penyelesaian 3-E
+### Penyelesaian 4-E
 
 **Fungsi `revert_processes()`**:
 ```c
@@ -1687,14 +1687,14 @@ void revert_processes(const char *username) {
 - Mencatat status `"RUNNING"` ke log.
 - Mencetak pesan bahwa user telah dibuka dan proses baru bisa dijalankan.
 
-### Soal 3-F
+### Soal 4-F
 
 Mencatat ke dalam file log
 Sebagai dokumentasi untuk mengetahui apa saja yang debugmon lakukan di komputer user, debugmon melakukan pencatatan dan penyimpanan ke dalam file debugmon.log untuk semua proses yang dijalankan dengan format
 **`[dd:mm:yyyy]-[hh:mm:ss]_nama-process_STATUS(RUNNING/FAILED)`**
 Untuk poin b, c, dan e, status proses adalah **RUNNING**. Sedangkan untuk poin d, status proses adalah **FAILED**. 
 
-### Penyelesaian 3-F
+### Penyelesaian 4-F
 
 **Fungsi `write_log()`**:
 ```c
