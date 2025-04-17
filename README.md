@@ -465,6 +465,33 @@ int main(int argc, char *argv[]) {
 
 ## Dokumentasi
 
+### Soal A
+![](assets/Soal%201A.png)
+
+![](assets/Lanjutan%20soal%202A.png)
+
+### Soal B
+![](assets/Soal%201B.png)
+
+### Soal C
+![](assets/Soal%201C.png)
+
+### Soal D
+![](assets/Soal%201D.png)
+
+### Soal E
+![](assets/1Soal%20E%20password%20check.png)
+
+Error Check :
+
+![](assets/1Pling%20akhir%20error%20check.png)
+
+
+
+
+
+
+
 # Soal 2
 _**Oleh : Nabilah Anindya Paramesti**_
 
@@ -1103,20 +1130,20 @@ Dengan adanya activity.log, pengguna seperti Mafuyu dan Kanade bisa mengetahui d
 
 ## Dokumentasi
 #### Soal A & B
-![command decrypt](assets/command1b.PNG)
+![command decrypt](assets/command2b.PNG)
 
 Ketika menjalankan perintah di atas maka akan muncul file dan folder baru sebagai berikut
 
-![command decrypt](assets/strukturFolder1b.PNG)
+![command decrypt](assets/strukturFolder2b.PNG)
 
 ![command decrypt](assets/successUnzip.PNG)
 
 File zip dari link berhasil di unzip ke folder `starter_kit`, folder `quarantine` dibuat, dan muncul file `activity.log` untuk mencatat aktivitas. Dari perintah `./starterkit --decrypt` akan muncul pesan sebagai berikut
 
-![command decrypt](assets/log1b.PNG)
+![command decrypt](assets/log2b.PNG)
 
 ### Soal C (`--quarantine`)
-![command quarantine](assets/command1c.PNG)
+![command quarantine](assets/command2c.PNG)
 
 Ketika menjalankan perintah di atas maka file di `starter_kit` akan di pindahkan ke `quarantine` sekaligus nama file yang terenkripsi akan di decrypt
 
@@ -1124,10 +1151,10 @@ Ketika menjalankan perintah di atas maka file di `starter_kit` akan di pindahkan
 
 Aktivitas tersebut juga di catat di `activity.log`
 
-![](assets/log1c.PNG)
+![](assets/log2c.PNG)
 
 ### Soal C (`--return`)
-![command return](assets/command1d.PNG)
+![command return](assets/command2d.PNG)
 
 Ketika menjalankan perintah di atas maka file yang tadinya ada di folder `quarantine` akan dipindahkan ke `starter_kit` kembali.
 
@@ -1135,7 +1162,7 @@ Ketika menjalankan perintah di atas maka file yang tadinya ada di folder `quaran
 
 Dan akan mencatat aktivitas di log file
 
-![](assets/log1d.PNG)
+![](assets/log2d.PNG)
 
 ### Soal D
 ![command eradicate](assets/command1e.PNG)
@@ -1146,7 +1173,7 @@ Ketika menjalankan perintah di atas maka program akan menghapus seluruh file yan
 
 Dan akan mencatat di log file
 
-![](assets/log1e.PNG)
+![](assets/log2e.PNG)
 
 ### Soal E
 Ketika menjalankan perintah **`./starterkit --shutdown`** maka proses daemon dari program ini akan di berhentikan, berikut merupakan pengecekannya menggunakan command `ps aux | starterkit`
