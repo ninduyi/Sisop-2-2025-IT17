@@ -1480,6 +1480,23 @@ Untuk kendala sendiri itu ada yang minor sama ada yang gk bisa,
 
 ## Dokumentasi
 
+- Untuk struktur proses di program `./runme`:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/soal3_1.png)
+
+- Untuk persebaran binary dalam fungsi `trojan.exe`, menyebarkan exec `runme` di dalam seluruh directory home:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/soal3_2.png)
+
+- Untuk proses `mine-crafter-xx` bernama `Miner-XX` lalu juga berisi keterangan tanggal dan jam yang berisi karakter hash acak dengan waktu interval 3-30 detik:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/soal3_3.png)
+
+- Untuk kendala minor, proses `mine-crafter-xx` tidak mati saat `rodok.exe` dimatikan:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/Screenshot%202025-04-18%20191519.png)
+
+
 
 # Soal 4
 _*Oleh : Muhammad Khairul Yahya *_
@@ -1725,3 +1742,20 @@ Untuk kendala ada 1 di penyelesaian 3-F,
 - Untuk log tidak sesuai dengan format yang diinginkan dari proses `daemon`, `stop`, dan `revert`. dikarenakan log yang dicatat bukan `"RUNNING"`. tetapi hal yang lain.
 
 ## Dokumentasi
+
+- Untuk output dari command `./debugmon list irul`:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/Screenshot%202025-04-18%20042010.png)
+
+- Untuk output dari command `./debugmon daemon irul` yang dihentikan dengan `./debugmon stop irul`:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/Screenshot%202025-04-18%20042018.png)
+
+- Untuk output dari command `./debugmon revert irul` **menggunakan `sudo`**:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/Screenshot%202025-04-18%20042109.png)
+
+- Untuk isi dari `debugmon.log`:
+
+![image alt](https://github.com/ninduyi/Sisop-2-2025-IT17/blob/63c722c7cc9731b261ba870df47360855e197a24/assets/Screenshot%202025-04-18%20042434.png)
+
