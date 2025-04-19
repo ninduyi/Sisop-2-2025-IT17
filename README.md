@@ -82,7 +82,7 @@ void download_and_extract() {
 ```
 
  ### Keterangan ###
- ### `if (access("Clues", F_OK) == 0)`### 
+ ### `if (access("Clues", F_OK) == 0)` ### 
  - Mengecek apakah folder `Clues` sudah ada, `F_OK` : cek keberadaan file.
  - `printf("Clues folder already exists. Skipping download.\n");` = jika file Clues sudah terdownload maka akan keluar kalimat ini
  ### `char *wget_args[] = {"wget", "-O", "Clues.zip", "https://...", NULL}; run_command(wget_args);` ### 
